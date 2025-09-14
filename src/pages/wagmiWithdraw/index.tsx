@@ -32,25 +32,25 @@ const Withdraw = () => {
     const [unstakeLoading, setUnstakeLoading] = useState(false);
     const [withdrawLoading, setWithdrawLoading] = useState(false);
     const { data } = useWalletClient();
-    console.log("data", data)
     const [userData, setUserData] = useState<UserStakeData>(InitData);
-    const { data: _userData } = useUser(Pid, address as Address);
-    const { data: stakedData } = useStakingBalance(Pid, address as Address);
-    const { data: withdrawData } = useWithdrawAmount(Pid, address as Address);
+    const { data: _userData,refetch: refetchUserData } = useUser(Pid, address as Address);
+    const { data: stakedData,refetch: refetchStakedData } = useStakingBalance(Pid, address as Address);
+    const { data: withdrawData,refetch: refetchWithdrawData } = useWithdrawAmount(Pid, address as Address);
     const { useWithdraw,useUnstake } = useStakeContractWrite();
     // @ts-ignore
     const isWithdrawable = useMemo(() => Number(userData.withdrawable) > 0 && isConnected, [userData, isConnected]);
 
-    const getUserData = useCallback(async () => {
-        if (!stakedData || !withdrawData) {
-            return InitData;
-        }
-
+    const getUserData = async () => {
+        // if (!stakedData || !withdrawData) {
+        //     return InitData;
+        // }
         const staked = stakedData as bigint;
-        const [requestAmount, pendingWithdrawAmount] = withdrawData ;
+        const [requestAmount, pendingWithdrawAmount] = withdrawData ?? [0n, 0n];
 
         const ava = Number(formatUnits(pendingWithdrawAmount, 18));
         const total = Number(formatUnits(requestAmount, 18));
+        console.log('total', total);
+        console.log('ava', ava);
         if (_userData) {
             setUserData({
                 staked: formatUnits(staked, 18),
@@ -58,18 +58,26 @@ const Withdraw = () => {
                 withdrawable: ava.toString()
             });
         }
-        return {
-            staked: formatUnits(staked, 18),
-            withdrawPending: (total - ava).toFixed(4),
-            withdrawable: ava.toString()
-        };
-    }, [address,_userData]);
+
+    }
 
     useEffect(() => {
-        if ( address) {
-            getUserData();
+        if(address) {
+            refresh();
         }
-    }, [address, _userData]);
+
+    }, [address,_userData]);
+    const refresh = async () => {
+        if (address) {
+            await refetchUserData();
+            await refetchStakedData();
+            await refetchWithdrawData();
+            await getUserData();
+            console.log('getUserData', _userData)
+            console.log("stakedData", stakedData)
+            console.log("withdrawData", withdrawData)
+        }
+    }
 
     const handleUnStake = useCallback(async () => {
         if (!isConnected || !data) return;

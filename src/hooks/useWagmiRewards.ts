@@ -25,11 +25,11 @@ const useRewards = () => {
   const { address, isConnected } = useAccount();
 
   // 使用 wagmi hooks 获取数据
-  const { data: userData, isError: isUserError, error: userError } = useUser(Pid, address);
-  const { data: stakedAmount } = useStakingBalance(Pid, address);
-  const { data: poolInfo } = usePool(Pid);
-  const { data: metaNodeAddr } = useMetaNode();
-  const { data: withdrawData } = useWithdrawAmount(Pid, address);
+  const { data: userData, isError: isUserError, error: userError,refetch: refetchUserData } = useUser(Pid, address);
+  const { data: stakedAmount,refetch: refetchStakedAmount } = useStakingBalance(Pid, address);
+  const { data: poolInfo,refetch: refetchPoolInfo } = usePool(Pid);
+  const { data: metaNodeAddr,isError: isMetaNodeError, error: metaNodeError,refetch: refetchMetaNodeAddr } = useMetaNode();
+  const { data: withdrawData,refetch: refetchWithdrawData } = useWithdrawAmount(Pid, address);
 
   // 处理奖励数据
   const rewardsData = useMemo(() => {
@@ -89,6 +89,11 @@ const useRewards = () => {
   // 刷新函数（在 wagmi 中通常不需要手动刷新，数据会自动更新）
   const refresh = () => {
     // 在 wagmi 中，数据通常会根据依赖项自动更新
+    refetchUserData();
+    refetchStakedAmount();
+    refetchPoolInfo();
+    refetchMetaNodeAddr();
+    refetchWithdrawData();
 
   };
 
